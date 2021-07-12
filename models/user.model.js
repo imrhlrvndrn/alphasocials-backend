@@ -6,7 +6,7 @@ const userSchema = new Schema(
         entity: { type: String, required: true, default: 'User' },
         full_name: { type: String, required: true },
         username: { type: String, required: true, unique: true },
-        email: { type: String, required: true, unique: true },
+        email: { type: String, required: true },
         password: { type: String, required: true },
         avatar: {
             url: { type: String },

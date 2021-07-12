@@ -5,7 +5,7 @@ const connectDB = require('./config/db');
 const cookieParser = require('cookie-parser');
 
 // importing middlewares
-const { errorHandler } = require('./middlewares');
+const { errorHandler, requiresAuth } = require('./middlewares');
 
 // importing route handlers
 const { authRoutes, commentRoutes, postRoutes, userRoutes } = require('./routes');
@@ -22,6 +22,9 @@ app.use('/auth', authRoutes);
 app.use('/users', userRoutes);
 app.use('/posts', postRoutes);
 app.use('/comments', commentRoutes);
+app.get('/verify', requiresAuth, (req, res, next) => {
+    res.status(200).json({ message: 'Token is valid' });
+});
 
 app.use(errorHandler);
 

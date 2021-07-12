@@ -3,12 +3,28 @@ const { CustomError } = require('../../services');
 const { successResponse } = require('../../utils');
 
 const userController = {
+    verifyUsername: async (req, res, next) => {
+        const { username } = req.body;
+        try {
+            const usernameExists = await User.exists({ username });
+            if (usernameExists)
+                return next(CustomError.alreadyExists(`${username} is already taken.`));
+
+            return successResponse(res, {
+                success: true,
+                data: { username },
+            });
+        } catch (error) {
+            console.error(error);
+            return next(error);
+        }
+    },
     me: async (req, res, next) => {
         const { user } = req;
-        const { populate } = req.query;
+        const { populate, select } = req.body;
 
         try {
-            transformedUser = user.populate(populate || '');
+            transformedUser = user;
             return successResponse(res, {
                 data: {
                     user: { ...user._doc, password: undefined },

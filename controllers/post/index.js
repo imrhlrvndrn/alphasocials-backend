@@ -16,6 +16,43 @@ const postController = {
             return next(error);
         }
     },
+    fetchPosts: async (req, res, next) => {
+        const { type = 'USER' } = req.query;
+        const { _id: userId } = req.auth;
+
+        try {
+            switch (type) {
+                case 'USER': {
+                    const returnedPosts = await Post.find({ user: userId })
+                        .limit(10)
+                        .populate({ path: 'user', select: ['full_name', 'avatar'] });
+                    if (!returnedPosts.length)
+                        return next(CustomError.notFound(`No posts to show`));
+
+                    return successResponse(res, {
+                        data: {
+                            posts: returnedPosts,
+                        },
+                    });
+                }
+
+                case 'FEED': {
+                    const returnedUser = await User.findById(userId);
+                    if (!returnedUser) return next(CustomError.notFound(`User doesn't exist`));
+
+                    const returnedPosts = await Post.find({});
+                    if (!returnedPosts.length) return next(CustomError.serverError());
+                }
+
+                default: {
+                    return next(CustomError.badRequest(`Invalid operation type`));
+                }
+            }
+        } catch (error) {
+            console.error(error);
+            return next(error);
+        }
+    },
     addPost: async (req, res, next) => {
         const { _id: userId } = req.auth;
         const { content } = req.body;
@@ -37,7 +74,16 @@ const postController = {
             await returnedUser.save();
 
             return successResponse(res, {
-                data: { post: savedPost },
+                data: {
+                    post: {
+                        ...savedPost._doc,
+                        user: {
+                            _id: returnedUser.id,
+                            full_name: returnedUser.full_name,
+                            avatar: returnedUser.avatar,
+                        },
+                    },
+                },
                 toast: {
                     status: 'success',
                     message: 'Added new post',
@@ -53,7 +99,7 @@ const postController = {
         const { _id: userId } = req.auth;
         const { content } = req.body;
 
-        if (userId !== post.user) return next(CustomError.unAuthorized());
+        if (userId !== post.user.toString()) return next(CustomError.unAuthorized());
         try {
             post.content = content;
             const modifiedPost = await post.save();
@@ -74,7 +120,7 @@ const postController = {
         const { post } = req;
         const { _id: userId } = req.auth;
 
-        if (userId !== post.user) return next(CustomError.unAuthorized());
+        if (userId !== post.user.toString()) return next(CustomError.unAuthorized());
         try {
             const returnedUser = await User.findOne({ _id: userId });
             if (!returnedUser) return next(CustomError.notFound(`User not found`));

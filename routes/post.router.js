@@ -1,28 +1,34 @@
 const router = require('express').Router();
-const { postController } = require('../controllers');
-const { requiresAuth, postMiddlewares } = require('../middlewares');
+const {
+    postController: {
+        addPost,
+        fetchPost,
+        fetchPosts,
+        modifyPost,
+        destroyPost,
+        dislikePost,
+        likePost,
+        bookmarkPost,
+        unbookmarkPost,
+    },
+} = require('../controllers');
+const {
+    requiresAuth,
+    postMiddlewares: { fetchPost: fetchPostMiddleware },
+} = require('../middlewares');
 
-router.route('/').all(requiresAuth).get().post(postController.addPost);
+router.route('/').all(requiresAuth).get(fetchPosts).post(addPost);
 
-router.param('postId', postMiddlewares.fetchPost);
+router.param('postId', fetchPostMiddleware);
 
 router
     .route('/:postId')
-    .all(requiresAuth)
-    .get(postController.fetchPost)
-    .put(postController.modifyPost)
-    .delete(postController.destroyPost);
+    .get(fetchPost)
+    .put(requiresAuth, modifyPost)
+    .delete(requiresAuth, destroyPost);
 
-router
-    .route('/:postId/like')
-    .all(requiresAuth)
-    .post(postController.likePost)
-    .delete(postController.dislikePost);
+router.route('/:postId/like').all(requiresAuth).post(likePost).delete(dislikePost);
 
-router
-    .route('/:postId/bookmark')
-    .all(requiresAuth)
-    .post(postController.bookmarkPost)
-    .delete(postController.unbookmarkPost);
+router.route('/:postId/bookmark').all(requiresAuth).post(bookmarkPost).delete(unbookmarkPost);
 
 module.exports = router;

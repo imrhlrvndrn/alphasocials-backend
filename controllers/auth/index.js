@@ -5,25 +5,11 @@ const { successResponse } = require('../../utils');
 
 const authController = {
     signin: async (req, res, next) => {
-        const { email, password } = req.body;
+        const { username, password } = req.body;
 
         try {
-            // Check if email exists
-            const user = await User.findOne({
-                email: email,
-            });
-            // .populate({
-            //     path: 'cart',
-            //     populate: {
-            //         path: 'data.book',
-            //     },
-            // })
-            // .populate({
-            //     path: 'wishlists',
-            //     populate: {
-            //         path: 'data',
-            //     },
-            // });
+            // Check if username exists
+            const user = await User.findOne({ username: username });
             if (!user) return next(CustomError.invalidCredentials());
 
             // Check if password is correct
@@ -52,28 +38,16 @@ const authController = {
         }
     },
     signup: async (req, res, next) => {
-        const { email, full_name, password, avatar = {} } = req.body;
+        const { email, full_name, username, password, avatar = {} } = req.body;
         try {
-            // Check if email exists
-            const user = await User.findOne({
-                email: email,
+            // Check if username exists
+            const usernameExists = await User.exists({
+                username: username,
             });
-            // .populate({
-            //     path: 'cart',
-            //     populate: {
-            //         path: 'data.book',
-            //     },
-            // })
-            // .populate({
-            //     path: 'wishlists',
-            //     populate: {
-            //         path: 'data',
-            //     },
-            // });
-            if (user)
+            if (usernameExists)
                 return next(
                     CustomError.alreadyExists(
-                        `${email} is associated with another account. Please use another email`
+                        `${username} is associated with another account. Please use another username`
                     )
                 );
 
@@ -81,7 +55,7 @@ const authController = {
             const hashedPassword = await bcrypt.hash(password, salt);
 
             const newUser = new User({
-                username: email.split('@')[0],
+                username: username || email.split('@')[0],
                 full_name,
                 email,
                 password: hashedPassword,
@@ -109,11 +83,11 @@ const authController = {
             return next(error);
         }
     },
-    signout: (req, res, next) => {
-        res.cookie('token', 'loggedout');
-        res.cookie('userId', 'loggedout');
+    signout: (req, res) => {
+        res.clearCookie('token');
+        res.clearCookie('userId');
+
         return successResponse(res, {
-            success: true,
             data: { message: "You're logged out" },
             toast: {
                 status: 'success',

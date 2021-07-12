@@ -1,19 +1,19 @@
-const { userController } = require('../controllers');
+const {
+    userController: { modifyUser, destroyUser, me, followUser, unfollowUser, verifyUsername },
+} = require('../controllers');
 const { requiresAuth } = require('../middlewares');
-const userMiddleware = require('../middlewares/user.middleware');
+const { fetchUser } = require('../middlewares/user.middleware');
 
 const router = require('express').Router();
 
 router.route('/').get();
 
-router.param('userId', userMiddleware.fetchUser);
+router.route('/verify-username').post(verifyUsername);
 
-router.route('/:userId').all(requiresAuth).get(userController.me).put(userController.modifyUser);
+router.param('userId', fetchUser);
 
-router
-    .route('/:userId/follow')
-    .all(requiresAuth)
-    .post(userController.followUser)
-    .delete(userController.unfollowUser);
+router.route('/:userId').all(requiresAuth).post(me).put(modifyUser).delete(destroyUser);
+
+router.route('/:userId/follow').all(requiresAuth).post(followUser).delete(unfollowUser);
 
 module.exports = router;

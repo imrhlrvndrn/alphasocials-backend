@@ -1,24 +1,24 @@
-const { requiresAuth, commentMiddlewares } = require('../middlewares');
-const { commentController, replyController } = require('../controllers');
+const {
+    requiresAuth,
+    commentMiddlewares: { fetchComment },
+} = require('../middlewares');
+const {
+    commentController: { fetchComments, addComment, modifyComment, destroyComment },
+    replyController: { addReply, modifyReply, destroyReply },
+} = require('../controllers');
 
 const router = require('express').Router();
 
-router
-    .route('/')
-    .get(commentController.fetchComments)
-    .post(requiresAuth, commentController.addComment);
+router.route('/').get(fetchComments).post(requiresAuth, addComment);
 
-router.param('commentId', commentMiddlewares.fetchComment);
+router.param('commentId', fetchComment);
 
-router
-    .route('/:commentId')
-    .put(requiresAuth, commentController.modifyComment)
-    .delete(requiresAuth, commentController.destroyComment);
+router.route('/:commentId').put(requiresAuth, modifyComment).delete(requiresAuth, destroyComment);
 
 router
     .route('/:commentId/reply')
-    .post(requiresAuth, replyController.addReply)
-    .put(requiresAuth, replyController.modifyReply)
-    .delete(requiresAuth, replyController.destroyReply);
+    .post(requiresAuth, addReply)
+    .put(requiresAuth, modifyReply)
+    .delete(requiresAuth, destroyReply);
 
 module.exports = router;

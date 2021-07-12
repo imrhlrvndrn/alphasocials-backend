@@ -1,3 +1,6 @@
+const { Post } = require('../models');
+const { CustomError } = require('../services');
+
 const postMiddelwares = {
     fetchPost: async (req, res, next, postId) => {
         try {
