@@ -131,7 +131,11 @@ const postController = {
                     CustomError.serverError(`Couldn't destroy your post. Please try again`)
                 );
 
-            returnedUser.posts = returnedUser.posts.filter(({ post }) => post !== destroyedPost.id);
+            console.log('user posts => ', returnedUser.posts);
+            returnedUser.posts = returnedUser.posts.filter(
+                ({ post }) => post.toString() !== destroyedPost.id
+            );
+            console.log('Updated user posts => ', returnedUser.posts);
             await returnedUser.save();
 
             return successResponse(res, {
@@ -154,6 +158,12 @@ const postController = {
             const returnedUser = await User.findOne({ _id: userId });
             if (!returnedUser) return next(CustomError.notFound(`User not found.`));
 
+            if (
+                returnedUser.likes.filter((likedPost) => likedPost.post.toString() === post.id)
+                    .length > 0
+            )
+                return next(CustomError.alreadyExists());
+
             post.stats.likes += 1;
             const modifiedPost = await post.save();
 
@@ -162,7 +172,11 @@ const postController = {
 
             return successResponse(res, {
                 data: {
+                    postId: post.id,
                     stats: modifiedPost.stats,
+                    likedPost: returnedUser.likes.filter(
+                        (post) => post.post.toString === post.id
+                    )[0],
                 },
                 toast: {
                     status: 'success',
